@@ -1,6 +1,8 @@
 #include"tree.h"
 #include<assert.h>
 #include<stdlib.h>
+#include<stdio.h>
+#include<math.h>
 #include<queue>
 using namespace std;
 typedef struct Node *PNode, *TREE;
@@ -22,16 +24,16 @@ PNode create_tree(){
 }
 PNode insert_node(TREE tree, int data ){
 	//find correct pos
-        PNode node = create_node();
-        node->data = data;
+	PNode node = create_node();
+	node->data = data;
 	node->color = RED;
 	if( NULL==tree ){
 		tree = node;
 		return tree;
 	}
-        PNode p = tree;
-        PNode pre = p;
-        while( NULL!=p ){
+	PNode p = tree;
+	PNode pre = p;
+	while( NULL!=p ){
 		pre = p;
 		if( data<=p->data ){
 			p = p->left;
@@ -108,6 +110,9 @@ PNode search(TREE tree, int data ){
 	return node;
 }
 void insert_fixup(TREE tree, PNode node){
+	if( node->data==205 ){
+		cout<<endl;
+	}
 	while(  node->parent!=NULL && \
 			node->parent->parent!=NULL && \
 			node->parent->color==RED ){
@@ -118,7 +123,7 @@ void insert_fixup(TREE tree, PNode node){
 			PNode uncle = node->parent->parent->right;
 				//get uncle node
 			//sink black and float red
-			if( uncle->color==RED ){
+			if( uncle!=NULL && uncle->color==RED ){
 				//after this still be case 1, need judge
 				node->parent->color = BLACK;
 				uncle->color = BLACK;
@@ -139,7 +144,32 @@ void insert_fixup(TREE tree, PNode node){
 			    right_rotate( tree, node->parent->parent );
 			}
 		}else{
-			//parent is right child of grandpa
+ 		    //in this case, grandpa exists
+			//goal is floating the red
+			//parent is left child of grandpa
+			PNode uncle = node->parent->parent->left;
+			//get uncle node
+			//sink black and float red
+			if( uncle!=NULL && uncle->color==RED ){
+				//after this still be case 1, need judge
+				node->parent->color = BLACK;
+				uncle->color = BLACK;
+				node->parent->parent->color = RED;
+				node = node->parent->parent;
+				//node->parent and uncle is black
+				//node is red
+				//this case prepare for right rotate
+			}else{
+				if( node==node->parent->left ){
+					//node is right child of parent
+					node = node->parent;
+					right_rotate( tree, node );
+				}
+				//right rotate and ensure balck path length
+				node->parent->color = BLACK;
+				node->parent->parent->color = RED;
+				left_rotate( tree, node->parent->parent );
+			}
 		}
 	}
 	//until here we can change red to black and p:5 will
@@ -147,7 +177,6 @@ void insert_fixup(TREE tree, PNode node){
 	tree->color = BLACK;
 }
 void show_tree(TREE tree){
-	int w = 128;//width of paint
 	//bfs based
 	queue<PNode> q1, q2;
 	queue<PNode> *qCur, *qNext;
@@ -160,19 +189,39 @@ void show_tree(TREE tree){
 	qCur->push( tree );
 	//get depth
 	int nDepth = get_depth( tree );
+	int nRowHigh = 2;//height of row
+	int W = 32;//width of canvas
+
 	for( int iDep = 1; iDep<=nDepth; iDep++ ){
+		int nCurCount ;//current count of node of level iDep
+		nCurCount = get_count( iDep );//get count
+		int nCurNode = 0;//index of current node:1 based
+		int nCurOffset = 0;//current offset of x-ray
+		
+		int nColWidth;//current column width
+		nColWidth = W/nCurCount;
 		while( !qCur->empty() ){
+			nCurNode ++;//1 based
 			PNode node = qCur->front();
 			qCur->pop();
+			//before data
+			for( int i=0; i<nColWidth-2; i++ ){
+				printf(" ");
+			}
 			if( NULL==node ){
-				cout<<"NULL";
+				printf("----");
 			}else{
-				cout<<(node->data);
 				if( node->color==BLACK ){
-					cout<<"[*]";
+				    printf("%4d", node->data);
+				}else{
+					printf("%4d", node->data);
 				}
 			}
-			cout<<"	";						
+			//after data
+			for( int i=0; i<nColWidth-2; i++ ){
+				printf(" ");
+			}
+			
 			if( NULL==node ){
 				qNext->push( NULL );//for left
 				qNext->push( NULL );//for right
@@ -181,7 +230,10 @@ void show_tree(TREE tree){
 				qNext->push( node->right );//for right
 			}
 		}
-		cout<<endl;
+		//show row height
+		for( int i=0; i<nRowHigh; i++ ){
+			printf("\n");
+		}
 		//switch qCur and qNext
 		queue<PNode>* qTemp = qCur;
 		qCur = qNext;
@@ -231,7 +283,7 @@ void delete_fixup(TREE tree, PNode node){
 		if( node==node->parent->left ){
 			PNode brother = node->parent->right;
 			//here we can get a red pos
-			if( brother->color==RED ){				
+			if( brother->color==RED ){
 				brother->color = BLACK;
 				node->parent->color = RED;
 				left_rotate( tree, node->parent );
@@ -244,8 +296,8 @@ void delete_fixup(TREE tree, PNode node){
 				node = node->parent;
 			}else {
 				if( brother->right->color==BLACK ){
-					brother->color = RED;
 					brother->left->color = BLACK;
+					brother->color = RED;
 					right_rotate( tree, brother );
 					brother = node->parent->right;
 				}
@@ -264,6 +316,9 @@ void delete_fixup(TREE tree, PNode node){
 
 }
 void left_rotate( TREE tree, PNode node ){
+	if( node->data==205 ){
+		cout<<endl;
+	}
 	assert( node!=NULL );//prevent illegal call
 	//get related subtree
 	PNode left = node->left;
@@ -277,11 +332,19 @@ void left_rotate( TREE tree, PNode node ){
 	//rotate: we take over all related pointer, and be careful
 	//try typing first line code, and you find the order
 	right->parent = node->parent;
+	if( node==node->parent->left ){
+		node->parent->left = right;
+	}else{
+		node->parent->right = right;
+	}
 	node->parent = right;
-	node->right = right->left;
+	node->right = right_left;
 	right->left = node;
 }
 void right_rotate( TREE tree, PNode node ){
+	if( node->data==205 ){
+		cout<<endl;
+	}
 	assert( node!=NULL );//prevent illegal call
 	//get related subtree
 	PNode left = node->left;
@@ -292,8 +355,22 @@ void right_rotate( TREE tree, PNode node ){
 		left_left = left->left;
 		left_right = left->right;
 	}
+	//until now we take over all need pointer
+	//we can change the child or parent field
 	left->parent = node->parent;
+	if( node==node->parent->left ){
+		node->parent->left = left;
+	}else{
+		node->parent->right = left;
+	}
 	node->parent = left;
-	node->left = left_right;
 	left->right = node;
+	node->left = left_right;
+}
+//get node count of depth
+int get_count( int depth ){
+	assert( depth>0 );
+	int count = 0;
+	count = pow( 2, depth-1 );
+	return count;
 }
