@@ -1,4 +1,6 @@
 CC=g++
+
+
 CFLAGS=-g
 
 all:	main

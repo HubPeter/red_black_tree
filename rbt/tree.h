@@ -1,5 +1,3 @@
-
-
 #ifndef _TREE_H_
 #define _TREE_H_
 
@@ -13,7 +11,6 @@ struct Node{
 	struct Node* right;
 	int data;
 	Color color;
-	
 };
 
 typedef struct Node *PNode, *TREE;
@@ -27,7 +24,9 @@ void show_tree(TREE tree);
 int get_depth( TREE tree );
 PNode get_successor( TREE tree, PNode node );
 void delete_fixup(TREE tree, PNode node);
-
+void left_rotate( TREE tree, PNode node );
+void right_rotate( TREE tree, PNode node );
+PNode get_minimum( PNode node);
 
 
 #endif
