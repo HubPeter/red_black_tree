@@ -14,6 +14,7 @@ PNode create_node(){
 	}
 	node->left = NULL;
 	node->right = NULL;
+	node->parent = NULL;
 	node->color = BLACK;
 	return node;
 }
@@ -49,7 +50,7 @@ PNode insert_node(TREE tree, int data ){
 	}
 	node->parent = pre;
 	//fixup
-	insert_fixup(tree, node);
+	tree = insert_fixup(tree, node);
 	return tree;
 }
 
@@ -93,7 +94,7 @@ PNode delete_node(TREE tree, PNode node){
 	}
 	//this case will break p:5(black path)
 	if( BLACK==succ->color ){
-		delete_fixup( tree, child );
+		tree = delete_fixup( tree, child );
 	}
 	free( succ );//free node
 	return tree;
@@ -109,8 +110,8 @@ PNode search(TREE tree, int data ){
 	}
 	return node;
 }
-void insert_fixup(TREE tree, PNode node){
-	if( node->data==205 ){
+PNode insert_fixup(TREE tree, PNode node){
+	if( node->data==939 ){
 		cout<<endl;
 	}
 	while(  node->parent!=NULL && \
@@ -136,12 +137,16 @@ void insert_fixup(TREE tree, PNode node){
 				if( node==node->parent->right ){
 					//node is right child of parent
 					node = node->parent;
-					left_rotate( tree, node );
+					check_p(tree);
+					check_p(tree);
+					tree = left_rotate( tree, node );//bad parent
+					check_p(tree);
+					check_p(tree);
 				}
 			    //right rotate and ensure balck path length
 			    node->parent->color = BLACK;
 				node->parent->parent->color = RED;
-			    right_rotate( tree, node->parent->parent );
+			    tree = right_rotate( tree, node->parent->parent );
 			}
 		}else{
  		    //in this case, grandpa exists
@@ -156,33 +161,34 @@ void insert_fixup(TREE tree, PNode node){
 				uncle->color = BLACK;
 				node->parent->parent->color = RED;
 				node = node->parent->parent;
-				//node->parent and uncle is black
+				//node->parent and uncle is blacks
 				//node is red
 				//this case prepare for right rotate
 			}else{
 				if( node==node->parent->left ){
 					//node is right child of parent
 					node = node->parent;
-					right_rotate( tree, node );
+					tree = right_rotate( tree, node );
 				}
 				//right rotate and ensure balck path length
 				node->parent->color = BLACK;
 				node->parent->parent->color = RED;
-				left_rotate( tree, node->parent->parent );
+				tree = left_rotate( tree, node->parent->parent );
 			}
 		}
 	}
 	//until here we can change red to black and p:5 will
 	//not be violated
 	tree->color = BLACK;
+	return tree;
 }
-void show_tree(TREE tree){
+bool show_tree(TREE tree){
 	//bfs based
-	queue<PNode> q1, q2;
+	queue<PNode> q1, q2 ;
 	queue<PNode> *qCur, *qNext;
 	if( NULL==tree ){
 		cout<<"Empty tree."<<endl;
-		return;
+		return true;
 	}
 	qCur = &q1;
 	qNext = &q2;
@@ -212,7 +218,7 @@ void show_tree(TREE tree){
 				printf("----");
 			}else{
 				if( node->color==BLACK ){
-				    printf("%4d", node->data);
+				    printf("%3d*", node->data);
 				}else{
 					printf("%4d", node->data);
 				}
@@ -240,7 +246,7 @@ void show_tree(TREE tree){
 		qNext = qTemp;
 		
 	}
-
+	return true;
 }
 int get_depth( TREE tree ){
 	
@@ -278,7 +284,7 @@ PNode get_successor(TREE tree, PNode node ){
 	}
 	return succ;
 }
-void delete_fixup(TREE tree, PNode node){
+PNode delete_fixup(TREE tree, PNode node){
 	while( node!=tree && BLACK==node->color ){
 		if( node==node->parent->left ){
 			PNode brother = node->parent->right;
@@ -286,7 +292,7 @@ void delete_fixup(TREE tree, PNode node){
 			if( brother->color==RED ){
 				brother->color = BLACK;
 				node->parent->color = RED;
-				left_rotate( tree, node->parent );
+				tree = left_rotate( tree, node->parent );
 				brother = node->parent->right;
 			}
 			//
@@ -298,13 +304,15 @@ void delete_fixup(TREE tree, PNode node){
 				if( brother->right->color==BLACK ){
 					brother->left->color = BLACK;
 					brother->color = RED;
-					right_rotate( tree, brother );
+					tree = right_rotate( tree, brother );
 					brother = node->parent->right;
 				}
 				brother->color = node->parent->color;
 				node->parent->color = BLACK;
 				brother->right->color = BLACK;
-				left_rotate( tree, node->parent );
+				check_p(tree);
+				tree = left_rotate( tree, node->parent );
+				check_p(tree);
 				node = tree;
 			}
 		}else{
@@ -312,11 +320,11 @@ void delete_fixup(TREE tree, PNode node){
 		}
 		node->color = BLACK;
 	}
-
+	return tree;
 
 }
-void left_rotate( TREE tree, PNode node ){
-	if( node->data==205 ){
+PNode left_rotate( TREE tree, PNode node ){
+	if( node->data==939 ){
 		cout<<endl;
 	}
 	assert( node!=NULL );//prevent illegal call
@@ -332,17 +340,25 @@ void left_rotate( TREE tree, PNode node ){
 	//rotate: we take over all related pointer, and be careful
 	//try typing first line code, and you find the order
 	right->parent = node->parent;
-	if( node==node->parent->left ){
-		node->parent->left = right;
+	if( node->parent!=NULL ){
+		if( node==node->parent->left ){
+			node->parent->left = right;
+		}else{
+			node->parent->right = right;
+		}
 	}else{
-		node->parent->right = right;
+		tree = right;
 	}
 	node->parent = right;
 	node->right = right_left;
+	if( right_left!=NULL ){
+		right_left->parent = node;//parent
+	}
 	right->left = node;
+	return tree;
 }
-void right_rotate( TREE tree, PNode node ){
-	if( node->data==205 ){
+PNode right_rotate( TREE tree, PNode node ){
+	if( node->data==939 ){
 		cout<<endl;
 	}
 	assert( node!=NULL );//prevent illegal call
@@ -358,14 +374,22 @@ void right_rotate( TREE tree, PNode node ){
 	//until now we take over all need pointer
 	//we can change the child or parent field
 	left->parent = node->parent;
-	if( node==node->parent->left ){
-		node->parent->left = left;
+	if( node->parent!=NULL ){
+		if (node==node->parent->left ){
+			node->parent->left = left;
+		}else{
+			node->parent->right = left;
+		}
 	}else{
-		node->parent->right = left;
+		tree = left;
 	}
 	node->parent = left;
 	left->right = node;
 	node->left = left_right;
+	if( left_right!=NULL ){
+		left_right->parent = node;
+	}
+	return tree;
 }
 //get node count of depth
 int get_count( int depth ){
@@ -373,4 +397,44 @@ int get_count( int depth ){
 	int count = 0;
 	count = pow( 2, depth-1 );
 	return count;
+}
+//check if parent path is the same with child path
+bool check_parent( TREE tree ){
+	if( NULL==tree ){
+		return true;
+	}
+	bool bLeft;
+	if( tree->left!=NULL ){
+		if( tree==tree->left->parent ){
+			bLeft = check_parent( tree->left );
+		}else{
+			bLeft = false;
+			cout<<tree->data<<"-l->"<<tree->left->data<<endl;
+			cout<<tree->left->parent->data<<"<-l-"<<\
+				tree->left->data<<endl;
+		}
+	}else{
+		bLeft = true;
+	}
+	bool bRight;
+	if( tree->right!=NULL ){
+		if( tree==tree->right->parent ){
+			bRight = check_parent( tree->right );
+		}else{
+			bRight = false;
+			cout<<tree->data<<"-r->"<<tree->right->data<<endl;
+			cout<<tree->right->parent->data<<"<-r-"<<		\
+				tree->right->data<<endl;
+		}
+	}else{
+		bRight = true;
+	}
+	return (bLeft&&bRight);
+}
+void check_p( PNode tree ){
+	if( !check_parent( tree ) && show_tree(tree) ){
+		
+		cout<<"BAD parent"<<endl;
+		exit(1);
+	}
 }

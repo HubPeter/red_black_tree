@@ -19,14 +19,16 @@ PNode create_tree();
 PNode insert_node(TREE tree, int data );
 PNode delete_node(TREE tree, PNode node);
 PNode search(TREE tree, int data );
-void insert_fixup(TREE tree, PNode node);
-void show_tree(TREE tree);
+PNode insert_fixup(TREE tree, PNode node);
+bool show_tree(TREE tree);
 int get_depth( TREE tree );
 PNode get_successor( TREE tree, PNode node );
-void delete_fixup(TREE tree, PNode node);
-void left_rotate( TREE tree, PNode node );
-void right_rotate( TREE tree, PNode node );
+PNode  delete_fixup(TREE tree, PNode node);
+PNode  left_rotate( TREE tree, PNode node );
+PNode right_rotate( TREE tree, PNode node );
 PNode get_minimum( PNode node);
-
+int get_count( int depth );
+bool check_parent( TREE tree );
+void check_p( PNode tree );
 
 #endif
