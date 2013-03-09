@@ -1,5 +1,7 @@
 #ifndef _TREE_H_
 #define _TREE_H_
+#include<queue>
+using namespace std;
 
 enum Color{
 	RED, BLACK
@@ -30,5 +32,12 @@ PNode get_minimum( PNode node);
 int get_count( int depth );
 bool check_parent( TREE tree );
 void check_p( PNode tree );
-
+bool check_rbt( TREE tree );
+bool check_rbt_1(TREE tree);
+bool check_rbt_2(TREE tree);
+bool check_rbt_3(TREE tree);
+bool check_rbt_4(TREE tree);
+bool check_rbt_5(TREE tree);
+bool get_leaves(TREE tree, queue<PNode>* qLeaves);
+int get_black_depth( PNode leaf );
 #endif

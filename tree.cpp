@@ -3,13 +3,15 @@
 #include<stdlib.h>
 #include<stdio.h>
 #include<math.h>
+#include<errno.h>
 #include<queue>
 using namespace std;
 typedef struct Node *PNode, *TREE;
 PNode create_node(){
     PNode node = (PNode)malloc(sizeof(struct Node));
 	if( NULL==node ){
-		cout<<"Malloc failed."<<endl;
+		//cout<<"Malloc failed."<<endl;
+		perror("Malloc failed.");
 		exit(1);
 	}
 	node->left = NULL;
@@ -55,6 +57,7 @@ PNode insert_node(TREE tree, int data ){
 }
 
 PNode delete_node(TREE tree, PNode node){
+	assert( node!=NULL );
 	PNode succ;
 	if( NULL==node->left || NULL==node->right ){
 		succ = node;
@@ -93,7 +96,7 @@ PNode delete_node(TREE tree, PNode node){
 		node->data = succ->data;
 	}
 	//this case will break p:5(black path)
-	if( BLACK==succ->color ){
+	if( succ->color==BLACK ){
 		tree = delete_fixup( tree, child );
 	}
 	free( succ );//free node
@@ -184,6 +187,7 @@ PNode insert_fixup(TREE tree, PNode node){
 }
 bool show_tree(TREE tree){
 	//bfs based
+	check_p( tree );
 	queue<PNode> q1, q2 ;
 	queue<PNode> *qCur, *qNext;
 	if( NULL==tree ){
@@ -196,7 +200,7 @@ bool show_tree(TREE tree){
 	//get depth
 	int nDepth = get_depth( tree );
 	int nRowHigh = 2;//height of row
-	int W = 32;//width of canvas
+	int W = 64;//width of canvas
 
 	for( int iDep = 1; iDep<=nDepth; iDep++ ){
 		int nCurCount ;//current count of node of level iDep
@@ -285,7 +289,7 @@ PNode get_successor(TREE tree, PNode node ){
 	return succ;
 }
 PNode delete_fixup(TREE tree, PNode node){
-	while( node!=tree && BLACK==node->color ){
+	while( node!=NULL && node!=tree && node->color==BLACK ){
 		if( node==node->parent->left ){
 			PNode brother = node->parent->right;
 			//here we can get a red pos
@@ -316,8 +320,37 @@ PNode delete_fixup(TREE tree, PNode node){
 				node = tree;
 			}
 		}else{
-			
+			PNode brother = node->parent->left;
+			//here we can get a red pos
+			if( brother->color==RED ){
+				brother->color = BLACK;
+				node->parent->color = RED;
+				tree = right_rotate( tree, node->parent );
+				brother = node->parent->left;
+			}
+			//
+			if( brother->right->color==BLACK &&\
+				brother->left->color==BLACK){
+				brother->color = RED;
+				node = node->parent;
+			}else {
+				if( brother->left->color==BLACK ){
+					brother->right->color = BLACK;
+					brother->color = RED;
+					tree = left_rotate( tree, brother );
+					brother = node->parent->left;
+				}
+				brother->color = node->parent->color;
+				node->parent->color = BLACK;
+				brother->left->color = BLACK;
+				check_p(tree);
+				tree = right_rotate( tree, node->parent );
+				check_p(tree);
+				node = tree;
+			}
 		}
+	}
+	if( node!=NULL ){
 		node->color = BLACK;
 	}
 	return tree;
@@ -433,8 +466,136 @@ bool check_parent( TREE tree ){
 }
 void check_p( PNode tree ){
 	if( !check_parent( tree ) && show_tree(tree) ){
-		
 		cout<<"BAD parent"<<endl;
+		perror("BAD parent");
 		exit(1);
 	}
 }
+//check if tree is a red_black_tree
+bool check_rbt( TREE tree ){
+	bool bRbt = check_rbt_1(tree) &&
+		check_rbt_2( tree ) &&
+		check_rbt_3( tree ) &&
+		check_rbt_4( tree ) &&
+		check_rbt_5( tree );
+	if( bRbt==false ){
+		perror("Not a standard RED BLACK TREE");
+		exit(1);
+	}
+}
+//p1 color is red or black
+bool check_rbt_1(TREE tree){
+	if( NULL==tree ){
+		return true;
+	}
+	bool bLeft, bRight;
+	if( tree->left!=NULL ){
+		if( tree->left->color==RED ||\
+			tree->left->color==BLACK ){
+			bLeft = check_rbt_1( tree->left );
+		}else{
+			bLeft = false;
+		}
+	}else{
+		bLeft = true;
+	}
+	if( tree->right!=NULL ){
+		if( tree->right->color==RED ||\
+			tree->right->color==BLACK ){
+			bRight = check_rbt_1( tree->right );
+		}else{
+			bRight = false;
+		}
+	}else{
+		bRight = true;
+	}
+	return ( bLeft && bRight );
+}
+//p2 root is black
+bool check_rbt_2(TREE tree){
+	assert( tree!=NULL );
+	if( tree->color==BLACK ){
+		return true;
+	}
+	return false;
+}
+//p3 NIL is black
+bool check_rbt_3(TREE tree){
+	return true;
+}
+//p4 if node is red, then two children is black
+bool check_rbt_4(TREE tree){
+	if( NULL==tree ){
+		return true;
+	}
+	bool bLeft, bRight;
+	if( tree->color==RED ){
+		if( tree->left!=NULL ){
+			if( tree->left->color==RED ){
+				return false;
+			}else{
+				bLeft = check_rbt_4( tree->left );
+			}
+		}else{
+			bLeft = true;
+		}
+		if( tree->right!=NULL ){
+			if( tree->right->color==RED ){
+				return false;
+			}else{
+				bRight = check_rbt_4( tree->right );
+			}
+		}else{
+			bRight = true;
+		}
+	}else{
+		bLeft = check_rbt_4( tree->left );
+		bRight = check_rbt_4( tree->right );
+	}
+	return ( bLeft && bRight );
+}
+//p4 length of black path is the same between two sub tree
+bool check_rbt_5(TREE tree){
+	queue<PNode> qLeaves;
+	get_leaves( tree, &qLeaves );
+	PNode leaf;
+	int nDepth = 0; 
+	if( !qLeaves.empty() ){
+		leaf = qLeaves.front();
+		nDepth = get_black_depth(leaf);
+	}
+	while( !qLeaves.empty() ){
+		leaf = qLeaves.front();
+		qLeaves.pop();
+		if( nDepth!=get_black_depth(leaf) ){
+			return false;
+		}
+	}
+	return true;
+}
+bool get_leaves(TREE tree, queue<PNode>* qLeaves){
+	if( NULL!=tree ){
+	    if( tree->left==NULL && tree->right==NULL ){
+			qLeaves->push( tree );
+			return true;
+		}
+		if( tree->left!=NULL ){
+			get_leaves( tree->left, qLeaves );
+		}
+		if( tree->right!=NULL ){
+			get_leaves( tree->right, qLeaves );
+		}
+	}
+}
+//get black depth of leaf
+int get_black_depth( PNode leaf ){
+	int depth = 0;
+	while( leaf!=NULL ){
+		if( leaf->color==BLACK ){
+			depth = depth + 1;
+		}
+		leaf = leaf->parent;
+	}
+	return depth;
+}
+
