@@ -2,9 +2,9 @@
 #include"tree.h"
 #include"tree.cpp"
 
- //debug with little number and show in good
-//#define SIZE 12
-#define SIZE 1024*8*4//big number to test
+//debug with little number and show in good
+#define SIZE 1024
+//#define SIZE 1024*8*4//big number to test
 
 using namespace std;
 
@@ -13,22 +13,24 @@ int main(void){
     //PNode tree = create_tree();
 	PNode tree = NULL;
     for(int i=0; i<SIZE; i++){
-        //int data = rand()%1024;//[0:32767]
-		int data = rand()%16383;//[0:32767]
+        int data = rand()%1024;//[0:32767]//little
+		    //num and good format
+		//int data = rand()%16383;//[0:32767]
 		
-		//cout<<i+1<<"--"<<data<<endl;//required when debug
+		cout<<i+1<<"--"<<data<<endl;//required when debug
 		tree = insert_node(tree, data);
 		//show_tree( tree );//required wehn debug
 		check_p(tree);
 	}
 	//delete root for first delete case
-	int data = 1;
 	cout<<"searching..."<<endl;
-	PNode node = search(tree, data);
-	if( node!=NULL ){
-		cout<<node<<"-->"<<node->data<<endl;
+	while( tree!=NULL ){
+		show_tree(tree);
+		cout<<"deleting "<<tree->data<<endl;
+
+		tree = delete_node( tree, tree );
 	}
-	//tree = delete_node(tree, node);
 	//show_tree( tree );
+	check_rbt( tree );
 	return 0;
 }

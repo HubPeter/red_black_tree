@@ -57,7 +57,9 @@ PNode insert_node(TREE tree, int data ){
 }
 
 PNode delete_node(TREE tree, PNode node){
-	assert( node!=NULL );
+	if( node==NULL ){
+		return tree;
+	}
 	PNode succ;
 	if( NULL==node->left || NULL==node->right ){
 		succ = node;
@@ -85,10 +87,15 @@ PNode delete_node(TREE tree, PNode node){
 			}
 		}
 	}else{
-		if( succ == succ->parent->left ){
-			succ->parent->left = NULL;
+		if( succ->parent!=NULL ){
+			if( succ == succ->parent->left ){
+				succ->parent->left = NULL;
+			}else{
+				succ->parent->right = NULL;
+			}
 		}else{
-			succ->parent->right = NULL;
+			return NULL;
+			//deleting root, do nothing
 		}
 	}
 	//think only tree one node, we do not need toswitch data
@@ -360,7 +367,9 @@ PNode left_rotate( TREE tree, PNode node ){
 	if( node->data==939 ){
 		cout<<endl;
 	}
-	assert( node!=NULL );//prevent illegal call
+	if( node==NULL ){
+		return tree;
+	}
 	//get related subtree
 	PNode left = node->left;
 	PNode right = node->right;
@@ -394,7 +403,9 @@ PNode right_rotate( TREE tree, PNode node ){
 	if( node->data==939 ){
 		cout<<endl;
 	}
-	assert( node!=NULL );//prevent illegal call
+	if( node==NULL ){
+		return tree;
+	}
 	//get related subtree
 	PNode left = node->left;
 	PNode right = node->right;
@@ -513,7 +524,9 @@ bool check_rbt_1(TREE tree){
 }
 //p2 root is black
 bool check_rbt_2(TREE tree){
-	assert( tree!=NULL );
+	if( tree==NULL ){
+		return true;
+	}
 	if( tree->color==BLACK ){
 		return true;
 	}
